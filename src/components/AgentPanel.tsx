@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useProgress } from "../hooks/useProgress";
+
 
 type AgentPanelProps = {
   title: string;
@@ -12,6 +14,8 @@ export default function AgentPanel({
   progress,
 }: AgentPanelProps) {
   const [typedText, setTypedText] = useState<string>("");
+  const animatedProgress = useProgress(0, progress);
+
 
   // -----------------------------
   // TYPEWRITER EFFECT
@@ -43,7 +47,8 @@ export default function AgentPanel({
           {title} — Working
         </span>
         <span className="text-xs text-slate-400">
-          {progress}%
+          {animatedProgress}%
+
         </span>
       </div>
 
@@ -51,7 +56,8 @@ export default function AgentPanel({
       <div className="w-full h-1 bg-slate-700 rounded overflow-hidden mb-3">
         <div
           className="h-1 bg-blue-500 transition-all duration-500"
-          style={{ width: `${progress}%` }}
+          style={{ width: `${animatedProgress}%
+` }}
         />
       </div>
 
