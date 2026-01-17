@@ -5,6 +5,8 @@ import { sendMessage, generateProposal } from "./services/api";
 import type { ChatMessage } from "./types/chat";
 import EmailBox from "./components/EmailBox";
 
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function App() {
   // -----------------------------
   // STATE
@@ -182,7 +184,7 @@ export default function App() {
         {showEmailBox && (
           <EmailBox
             onSend={async (email) => {
-              await fetch("http://127.0.0.1:8000/send-proposal-email", {
+              await fetch(`${VITE_API_BASE_URL}/send-proposal-email`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
