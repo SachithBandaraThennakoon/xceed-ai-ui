@@ -123,13 +123,6 @@ export default function App() {
   // -----------------------------
   // RESTART
   // -----------------------------
-  function handleRestart() {
-    setMessages([]);
-    setInput("");
-    setSessionId(undefined);
-    setShowEmailBox(false);
-    setStep(0);
-  }
 
   // -----------------------------
   // UI
