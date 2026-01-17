@@ -188,18 +188,38 @@ export default function App() {
         {/* EMAIL BOX */}
         {showEmailBox && (
           <EmailBox
-            onSend={email => {
+            onSend={async (email) => {
+              await fetch("http://127.0.0.1:8000/send-proposal-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  session_id: sessionId,
+                  email,
+                }),
+              });
+
               setMessages(prev => [
                 ...prev,
                 {
                   role: "system",
-                  content: `📨 Proposal will be sent to **${email}**`
+                  content: `✅ Proposal successfully sent to **${email}**`
                 }
               ]);
+
+              setMessages(prev => [
+                ...prev,
+                {
+                  role: "system",
+                  content: "📧 Proposal sent successfully. Did you receive the email?"
+                }
+              ]);
+
 
               setShowEmailBox(false);
             }}
           />
+
+
         )}
       </div>
     </div>
