@@ -130,58 +130,56 @@ export default function App() {
   // UI
   // -----------------------------
   return (
-    <div className="flex h-screen bg-slate-900 text-slate-100">
-      <div className="flex flex-col flex-1 relative">
+  <div className="h-[85vh] text-slate-100 flex items-center justify-center">
 
-        {/* CHAT */}
-        <div className="flex-1 overflow-y-auto flex justify-center px-4">
-          <div className="w-full max-w-4xl py-6 space-y-4">
-            <ChatArea messages={messages} />
-          </div>
-        </div>
+    {/* CHAT CONTAINER (75% HEIGHT) */}
+    <div className="w-full max-w-4xl h-[75vh] flex flex-col border border-slate-800 rounded-xl bg-slate-900">
 
-        {/* STATUS BAR */}
+      {/* STATUS BAR */}
+      <div className="shrink-0 border-b border-slate-800 px-4 py-2">
         <StatusBar step={step} />
+      </div>
 
-        {/* INPUT BAR */}
-        {!showEmailBox && (
-          <div className="sticky bottom-0 bg-slate-900 border-t border-slate-800">
-            <div className="max-w-4xl mx-auto p-4 flex gap-2">
-              <textarea
-                className="flex-1 resize-none rounded-lg bg-slate-800 text-white px-3 py-2 text-sm outline-none"
-                rows={1}
-                value={input}
-                placeholder="Message Xceed AI…"
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-              />
+      {/* CHAT SCROLL AREA */}
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+        <ChatArea messages={messages} />
+      </div>
 
-              <button
-                onClick={handleSend}
-                className="bg-blue-600 hover:bg-blue-500 px-4 rounded-lg"
-              >
-                Send
-              </button>
+      {/* INPUT OR EMAIL BOX */}
+      {!showEmailBox ? (
+        <div className="shrink-0 border-t border-slate-800 px-4 py-3 flex gap-2">
+          <textarea
+            className="flex-1 resize-none rounded-lg bg-slate-800 text-white px-3 py-2 text-sm outline-none"
+            rows={1}
+            value={input}
+            placeholder="Message Xceed AI…"
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+          />
 
-              {step === 1 && (
-                <button
-                  onClick={handleGenerateProposal}
-                  className="bg-green-600 hover:bg-green-500 px-4 rounded-lg"
-                >
-                  Generate Proposal
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+          <button
+            onClick={handleSend}
+            className="bg-blue-600 hover:bg-blue-500 px-4 rounded-lg"
+          >
+            Send
+          </button>
 
-        {/* EMAIL BOX */}
-        {showEmailBox && (
+          {step === 1 && (
+            <button
+              onClick={handleGenerateProposal}
+              className="bg-green-600 hover:bg-green-500 px-4 rounded-lg"
+            >
+              Generate Proposal
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="shrink-0 border-t border-slate-800">
           <EmailBox
             onSend={async (email) => {
               await fetch(`${VITE_API_BASE_URL}/send-proposal-email`, {
@@ -193,30 +191,25 @@ export default function App() {
                 }),
               });
 
-              setMessages(prev => [
+              setMessages((prev) => [
                 ...prev,
                 {
                   role: "system",
-                  content: `✅ Proposal successfully sent to **${email}**`
-                }
-              ]);
-
-              setMessages(prev => [
-                ...prev,
+                  content: `✅ Proposal successfully sent to **${email}**`,
+                },
                 {
                   role: "system",
-                  content: "📧 Proposal sent successfully. Did you receive the email?"
-                }
+                  content:
+                    "📧 Proposal sent successfully. Did you receive the email?",
+                },
               ]);
-
 
               setShowEmailBox(false);
             }}
           />
-
-
-        )}
-      </div>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 }
