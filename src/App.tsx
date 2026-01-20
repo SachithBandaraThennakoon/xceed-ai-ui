@@ -7,6 +7,10 @@ import AgentThinking from "./components/AgentThinking";
 import { sendMessage, generateProposal } from "./services/api";
 import type { ChatMessage } from "./types/chat";
 
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export default function App() {
@@ -200,9 +204,8 @@ export default function App() {
   // UI
   // -----------------------------
   return (
-    <div className="min-h-[100dvh] bg-slate-900 text-slate-100 flex justify-center">
-      <div className="w-full max-w-4xl h-[100dvh] sm:h-[75vh] flex flex-col border border-slate-800 bg-slate-900">
-
+    <div className="h-[100vh] bg-slate-900 text-slate-100 flex items-center justify-center">
+       <div className="w-full max-w-4xl h-[75vh] flex flex-col border border-slate-800 rounded-xl bg-slate-900 shadow-xl">
         {/* STATUS */}
         <div className="shrink-0 border-b border-slate-800 px-4 py-2 space-y-2">
           <StatusBar step={step} />
