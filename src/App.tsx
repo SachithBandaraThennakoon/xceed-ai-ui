@@ -25,7 +25,7 @@ export default function App() {
 
   const [showEmailBox, setShowEmailBox] = useState(false);
   const [awaitingEmailConfirm, setAwaitingEmailConfirm] = useState(false);
-  const [emailToConfirm, setEmailToConfirm] = useState<string | null>(null);
+  const [, setEmailToConfirm] = useState<string | null>(null);
 
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
 
