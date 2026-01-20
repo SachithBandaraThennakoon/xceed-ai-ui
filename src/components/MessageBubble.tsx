@@ -32,9 +32,8 @@ export default function MessageBubble({ msg }: Props) {
     max-w-[85%]
     px-4 py-3
     rounded-xl
-    leading-relaxed
+    leading-normal
     text-sm
-    whitespace-pre-wrap
     break-words
     overflow-wrap-anywhere
     prose prose-invert prose-sm

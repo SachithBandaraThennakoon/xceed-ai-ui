@@ -3,6 +3,7 @@ import StatusBar from "./components/StatusBar";
 import ChatArea from "./components/ChatArea";
 import EmailBox from "./components/EmailBox";
 import AgentProgress from "./components/AgentProgress";
+import AgentThinking from "./components/AgentThinking";
 import { sendMessage, generateProposal } from "./services/api";
 import type { ChatMessage } from "./types/chat";
 
@@ -16,28 +17,43 @@ export default function App() {
   const [input, setInput] = useState("");
   const [sessionId, setSessionId] = useState<string | undefined>();
 
+  // 0 discovery | 1 confirmed | 2 working | 3 proposal | 4 emailed
   const [step, setStep] = useState(0);
-  // 0 discovery | 1 confirmed | 2 agents | 3 proposal
 
-  const [showEmailBox, setShowEmailBox] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
+  const [showEmailBox, setShowEmailBox] = useState(false);
+  const [awaitingEmailConfirm, setAwaitingEmailConfirm] = useState(false);
+  const [emailToConfirm, setEmailToConfirm] = useState<string | null>(null);
+
+  const [activeAgent, setActiveAgent] = useState<string | null>(null);
+
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const didFetchGreeting = useRef(false);
 
-  const disableSend = isGenerating || step >= 2;
-
+  const disableSend =
+    isGenerating || step === 1 ||step === 2 || step === 3 ||step === 4 || awaitingEmailConfirm;
 
   // -----------------------------
-  // INITIAL GREETING
+  // GREETING
   // -----------------------------
-  useEffect(() => {
+  async function loadGreeting() {
+    const res = await fetch(`${API_BASE}/greeting`);
+    const data = await res.json();
+
     setMessages([
       {
         role: "assistant",
-        content: "👋 Hi! I’m **Xceed AI**. How can I help you today?"
-      }
+        content: data.message,
+      },
     ]);
+  }
+
+  useEffect(() => {
+    if (didFetchGreeting.current) return;
+    didFetchGreeting.current = true;
+    loadGreeting();
   }, []);
 
   // -----------------------------
@@ -46,13 +62,13 @@ export default function App() {
   useEffect(() => {
     const el = document.getElementById("chat-scroll");
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, isTyping]);
+  }, [messages, isTyping, activeAgent]);
 
   // -----------------------------
   // SEND MESSAGE
   // -----------------------------
   async function handleSend() {
-     if (!input.trim() || showEmailBox || disableSend) return;
+    if (!input.trim() || disableSend) return;
 
     const userMsg = input;
     setInput("");
@@ -61,58 +77,30 @@ export default function App() {
       textareaRef.current.style.height = "auto";
     }
 
-    setMessages(prev => [
+    setMessages((prev) => [
       ...prev,
-      { role: "client", content: userMsg }
+      { role: "client", content: userMsg },
     ]);
 
     try {
       const res = await sendMessage(userMsg, sessionId);
       setSessionId(res.session_id);
 
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: res.reply }
+        { role: "assistant", content: res.reply },
       ]);
 
       if (res.confirmed) setStep(1);
     } catch {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "⚠️ Backend error. Please try again."
-        }
+          content: "⚠️ Backend error. Please try again.",
+        },
       ]);
     }
-  }
-
-  // -----------------------------
-  // TYPING ANIMATION
-  // -----------------------------
-  async function typeMessage(
-    role: ChatMessage["role"],
-    fullText: string,
-    speed = 15
-  ) {
-    let current = "";
-    setMessages(prev => [...prev, { role, content: "" }]);
-
-    for (let i = 0; i < fullText.length; i++) {
-      current += fullText[i];
-      setMessages(prev => {
-        const copy = [...prev];
-        copy[copy.length - 1] = { role, content: current };
-        return copy;
-      });
-      await new Promise(r => setTimeout(r, speed));
-    }
-  }
-
-  async function addAgentMessage(text: string) {
-    setIsTyping(true);
-    await typeMessage("agent", text);
-    setIsTyping(false);
   }
 
   // -----------------------------
@@ -124,34 +112,34 @@ export default function App() {
     setIsGenerating(true);
     setStep(2);
 
-    setMessages(prev => [
+    setMessages((prev) => [
       ...prev,
       {
         role: "system",
         content:
-          "✅ Discovery confirmed. Our experts are now working on your solution…"
-      }
+          "✅ Discovery confirmed. Our experts are now working on your solution…",
+      },
     ]);
 
-    await addAgentMessage(
-      "🧠 BA Agent: Analyzing business requirements and objectives…"
-    );
-    await addAgentMessage(
-      "🏗 Solution Architect: Designing scalable AI, data & BI architecture…"
-    );
-    await addAgentMessage(
-      "📄 Proposal Agent: Preparing a client-ready proposal document…"
-    );
+    setActiveAgent("BA Agent");
+    await new Promise((r) => setTimeout(r, 1200));
+
+    setActiveAgent("Solution Architect");
+    await new Promise((r) => setTimeout(r, 1200));
+
+    setActiveAgent("Proposal Agent");
 
     const res = await generateProposal(sessionId);
 
-    setMessages(prev => [
+    setActiveAgent(null);
+
+    setMessages((prev) => [
       ...prev,
       { role: "assistant", content: res.final_proposal },
       {
         role: "system",
-        content: "📧 Would you like us to send this proposal to your email?"
-      }
+        content: "📧 Would you like us to send this proposal to your email?",
+      },
     ]);
 
     setStep(3);
@@ -160,29 +148,60 @@ export default function App() {
   }
 
   // -----------------------------
-  // RESET FLOW
+  // EMAIL CONFIRMATION
+  // -----------------------------
+  function handleEmailConfirmation(received: boolean) {
+    if (received) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "system",
+          content: "🎉 Thanks! Our team will be in touch soon. Feel free to start a new conversation anytime.",
+        },
+      ]);
+
+      setAwaitingEmailConfirm(false);
+
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "system",
+          content:
+            "⚠️ No worries. Emails sometimes go to Spam or Promotions.",
+        },
+        {
+          role: "assistant",
+          content: "Please re-enter your email and I’ll resend it.",
+        },
+      ]);
+
+      setAwaitingEmailConfirm(false);
+      setShowEmailBox(true);
+    }
+  }
+
+  // -----------------------------
+  // RESET CHAT
   // -----------------------------
   function resetChat() {
-    setMessages([
-      {
-        role: "assistant",
-        content: "👋 Hi! I’m **Xceed AI**. How can I help you today?"
-      }
-    ]);
+    setMessages([]);
     setSessionId(undefined);
     setStep(0);
-    setShowEmailBox(false);
     setIsGenerating(false);
     setIsTyping(false);
+    setShowEmailBox(false);
+    setAwaitingEmailConfirm(false);
+    setEmailToConfirm(null);
+    loadGreeting();
   }
 
   // -----------------------------
   // UI
   // -----------------------------
   return (
-    <div className="h-[85vh] bg-slate-900 text-slate-100 flex items-center justify-center">
-
-      <div className="w-full max-w-4xl h-[75vh] flex flex-col border border-slate-800 rounded-xl bg-slate-900 shadow-xl">
+    <div className="min-h-[100dvh] bg-slate-900 text-slate-100 flex justify-center">
+      <div className="w-full max-w-4xl h-[100dvh] sm:h-[75vh] flex flex-col border border-slate-800 bg-slate-900">
 
         {/* STATUS */}
         <div className="shrink-0 border-b border-slate-800 px-4 py-2 space-y-2">
@@ -197,26 +216,23 @@ export default function App() {
         >
           <ChatArea messages={messages} />
 
-          {isTyping && (
-            <div className="text-sm text-slate-400 italic animate-pulse mt-2">
-              🤖 Agent is working…
+          {activeAgent && (
+            <div className="mt-2">
+              <AgentThinking label={activeAgent} />
             </div>
           )}
         </div>
 
         {/* INPUT / EMAIL */}
-        {!showEmailBox ? (
+        {!showEmailBox && !awaitingEmailConfirm && (
           <div className="shrink-0 border-t border-slate-800 px-4 py-3">
             <div className="flex items-end gap-2">
-
               <textarea
                 ref={textareaRef}
-                className="flex-1 resize-none rounded-lg bg-slate-800 text-white px-3 py-2 text-sm outline-none max-h-32 overflow-y-auto"
+                className="flex-1 resize-none rounded-lg bg-slate-800 text-white px-3 py-2 text-base md:text-sm outline-none max-h-32 overflow-y-auto"
                 rows={1}
                 value={input}
                 placeholder="Message Xceed AI…"
-                inputMode="text"
-                enterKeyHint="send"
                 onChange={(e) => {
                   setInput(e.target.value);
                   e.target.style.height = "auto";
@@ -231,29 +247,26 @@ export default function App() {
               />
 
               <button
-  onClick={handleSend}
-  disabled={disableSend}
-  className="h-10 w-10 flex items-center justify-center rounded-lg
-             bg-blue-600 hover:bg-blue-500
-             disabled:opacity-40 disabled:cursor-not-allowed"
->
-  ➤
-</button>
-
-
+                onClick={handleSend}
+                disabled={disableSend}
+                className="h-10 w-10 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-40"
+              >
+                ➤
+              </button>
 
               {step === 1 && (
                 <button
                   onClick={handleGenerateProposal}
-                  disabled={isGenerating}
-                  className="h-10 px-4 rounded-lg bg-green-600 hover:bg-green-500 disabled:opacity-50"
+                  className="h-10 px-4 rounded-lg bg-green-600 hover:bg-green-500"
                 >
-                  Generate
+                  Generate Proposal
                 </button>
               )}
             </div>
           </div>
-        ) : (
+        )}
+
+        {showEmailBox && (
           <div className="shrink-0 border-t border-slate-800">
             <EmailBox
               onSend={async (email) => {
@@ -262,27 +275,64 @@ export default function App() {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     session_id: sessionId,
-                    email
-                  })
+                    email,
+                  }),
                 });
 
-                setMessages(prev => [
+                setEmailToConfirm(email);
+                setAwaitingEmailConfirm(true);
+                setShowEmailBox(false);
+                setStep(4);
+
+                setMessages((prev) => [
                   ...prev,
                   {
                     role: "system",
-                    content: `✅ Proposal successfully sent to **${email}**`
+                    content: `📨 Proposal sent to **${email}**`,
+                  },
+                  {
+                    role: "assistant",
+                    content: "Did you receive the email?",
                   },
                   {
                     role: "system",
-                    content: "🎉 Thank you! This conversation is now complete."
-                  }
+                    content:
+                      "⏳ It may take 1–2 minutes. Please check Spam / Promotions.",
+                  },
                 ]);
-
-                setTimeout(resetChat, 3000);
               }}
             />
           </div>
         )}
+
+        {awaitingEmailConfirm && (
+          <div className="shrink-0 border-t border-slate-800 px-4 py-3 flex gap-2 justify-center">
+            <button
+              onClick={() => handleEmailConfirmation(true)}
+              className="px-4 py-2 rounded-lg bg-green-600"
+            >
+              ✅ Yes
+            </button>
+            <button
+              onClick={() => handleEmailConfirmation(false)}
+              className="px-4 py-2 rounded-lg bg-red-600"
+            >
+              ❌ Not yet
+            </button>
+          </div>
+        )}
+
+        {step === 4 && !awaitingEmailConfirm && (
+          <div className="shrink-0 border-t border-slate-800 px-4 py-3 flex justify-center">
+            <button
+              onClick={resetChat}
+              className="text-sm text-slate-400 hover:text-white underline"
+            >
+              🔄 Start a new conversation
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );
