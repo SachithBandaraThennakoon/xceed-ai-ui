@@ -25,7 +25,7 @@ export default function App() {
 
   const [showEmailBox, setShowEmailBox] = useState(false);
   const [awaitingEmailConfirm, setAwaitingEmailConfirm] = useState(false);
-  const [, setEmailToConfirm] = useState<string | null>(null);
+  //const [emailToConfirm, setEmailToConfirm] = useState<string | null>(null);
 
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
 
@@ -192,7 +192,7 @@ export default function App() {
     setIsTyping(false);
     setShowEmailBox(false);
     setAwaitingEmailConfirm(false);
-    setEmailToConfirm(null);
+    
     loadGreeting();
   }
 
@@ -279,7 +279,7 @@ export default function App() {
                   }),
                 });
 
-                setEmailToConfirm(email);
+                
                 setAwaitingEmailConfirm(true);
                 setShowEmailBox(false);
                 setStep(4);
