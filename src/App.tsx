@@ -83,7 +83,7 @@ export default function App() {
     ]);
 
     // 2️⃣ Add thinking message
-    const thinkingId = Date.now();
+    //const thinkingId = Date.now();
 
     setMessages(prev => [
       ...prev,
