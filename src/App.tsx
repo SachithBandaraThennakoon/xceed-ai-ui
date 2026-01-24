@@ -255,7 +255,7 @@ export default function App() {
                 className="flex-1 resize-none rounded-lg bg-slate-800 text-white px-3 py-2 text-base md:text-sm outline-none max-h-32 overflow-y-auto"
                 rows={1}
                 value={input}
-                placeholder="Message Xceed AI…"
+                placeholder="Ask X AI..."
                 onChange={(e) => {
                   setInput(e.target.value);
                   e.target.style.height = "auto";

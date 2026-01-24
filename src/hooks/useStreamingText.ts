@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
 
-export function useStreamingText(
-  fullText: string,
-  speed = 15
-) {
+export function useStreamingText(fullText: string, speed = 13) {
   const [text, setText] = useState("");
 
   useEffect(() => {
+    if (!fullText) {
+      setText("");
+      return;
+    }
+
     let i = 0;
-    setText("");
+    let current = "";
+    setText(""); // reset safely
 
     const interval = setInterval(() => {
-      setText((prev) => prev + fullText.charAt(i));
+      current += fullText[i];
+      setText(current);
       i++;
 
       if (i >= fullText.length) {
@@ -20,7 +24,7 @@ export function useStreamingText(
     }, speed);
 
     return () => clearInterval(interval);
-  }, [fullText]);
+  }, [fullText, speed]);
 
   return text;
 }
