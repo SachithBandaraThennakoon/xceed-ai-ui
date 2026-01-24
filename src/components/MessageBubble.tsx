@@ -56,6 +56,15 @@ export default function MessageBubble({ msg }: Props) {
     bubbleClass += " bg-slate-800 text-slate-200";
   }
 
+  if (msg.thinking) {
+    return (
+      <div className="flex justify-start">
+        <div className="bg-slate-800 text-slate-400 px-4 py-3 rounded-xl text-sm italic animate-pulse">
+          Thinking…
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={`flex w-full ${containerClass}`}>
       <div className={bubbleClass}>

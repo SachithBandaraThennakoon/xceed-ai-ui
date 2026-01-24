@@ -7,8 +7,7 @@ import AgentThinking from "./components/AgentThinking";
 import { sendMessage, generateProposal } from "./services/api";
 import type { ChatMessage } from "./types/chat";
 
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+
 
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
@@ -37,7 +36,7 @@ export default function App() {
   const didFetchGreeting = useRef(false);
 
   const disableSend =
-    isGenerating || step === 1 ||step === 2 || step === 3 ||step === 4 || awaitingEmailConfirm;
+    isGenerating || step === 1 || step === 2 || step === 3 || step === 4 || awaitingEmailConfirm;
 
   // -----------------------------
   // GREETING
@@ -72,38 +71,59 @@ export default function App() {
   // SEND MESSAGE
   // -----------------------------
   async function handleSend() {
-    if (!input.trim() || disableSend) return;
+    if (!input.trim() || showEmailBox || disableSend) return;
 
     const userMsg = input;
     setInput("");
 
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
-
-    setMessages((prev) => [
+    // 1️⃣ Add user message
+    setMessages(prev => [
       ...prev,
-      { role: "client", content: userMsg },
+      { role: "client", content: userMsg }
+    ]);
+
+    // 2️⃣ Add thinking message
+    const thinkingId = Date.now();
+
+    setMessages(prev => [
+      ...prev,
+      {
+        role: "assistant",
+        content: "Thinking…",
+        thinking: true
+      }
     ]);
 
     try {
+      // Optional small delay (UX polish)
+      await new Promise(r => setTimeout(r, 400));
+
       const res = await sendMessage(userMsg, sessionId);
       setSessionId(res.session_id);
 
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: res.reply },
-      ]);
+      // 3️⃣ Replace thinking message with real response
+      setMessages(prev => {
+        const copy = [...prev];
+        copy.pop(); // remove thinking
+        copy.push({
+          role: "assistant",
+          content: res.reply
+        });
+        return copy;
+      });
 
       if (res.confirmed) setStep(1);
+
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
+      setMessages(prev => {
+        const copy = [...prev];
+        copy.pop(); // remove thinking
+        copy.push({
           role: "assistant",
-          content: "⚠️ Backend error. Please try again.",
-        },
-      ]);
+          content: "⚠️ Backend error. Please try again."
+        });
+        return copy;
+      });
     }
   }
 
@@ -196,7 +216,7 @@ export default function App() {
     setIsTyping(false);
     setShowEmailBox(false);
     setAwaitingEmailConfirm(false);
-    
+
     loadGreeting();
   }
 
@@ -205,7 +225,7 @@ export default function App() {
   // -----------------------------
   return (
     <div className="h-[100vh] bg-slate-900 text-slate-100 flex items-center justify-center">
-       <div className="w-full max-w-4xl h-[75vh] flex flex-col border border-slate-800 rounded-xl bg-slate-900 shadow-xl">
+      <div className="w-full max-w-4xl h-[75vh] flex flex-col border border-slate-800 rounded-xl bg-slate-900 shadow-xl">
         {/* STATUS */}
         <div className="shrink-0 border-b border-slate-800 px-4 py-2 space-y-2">
           <StatusBar step={step} />
@@ -282,7 +302,7 @@ export default function App() {
                   }),
                 });
 
-                
+
                 setAwaitingEmailConfirm(true);
                 setShowEmailBox(false);
                 setStep(4);
