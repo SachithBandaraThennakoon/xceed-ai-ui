@@ -219,6 +219,32 @@ export default function App() {
 
     loadGreeting();
   }
+  // -----------------------------
+
+  async function handleConfirm() {
+    setMessages(prev => [
+      ...prev,
+      {
+        role: "system",
+        content: "✔ Requirements confirmed by client."
+      }
+    ]);
+
+    const res = await sendMessage("CONFIRM", sessionId);
+    setSessionId(res.session_id);
+
+    setMessages(prev => [
+      ...prev,
+      { role: "assistant", content: res.reply }
+    ]);
+
+    setStep(1);
+  }
+
+
+  const hasAssistantResponded = messages.some(
+    (m) => m.role === "assistant"
+  );
 
   // -----------------------------
   // UI
@@ -255,7 +281,7 @@ export default function App() {
                 className="flex-1 resize-none rounded-lg bg-slate-800 text-white px-3 py-2 text-base md:text-sm outline-none max-h-32 overflow-y-auto"
                 rows={1}
                 value={input}
-                placeholder="Ask X AI..."
+                placeholder="Ask X..."
                 onChange={(e) => {
                   setInput(e.target.value);
                   e.target.style.height = "auto";
@@ -328,6 +354,21 @@ export default function App() {
           </div>
         )}
 
+        {step === 0 && hasAssistantResponded && (
+          <div className="shrink-0 border-t border-slate-800 px-4 py-3 flex flex-col items-center gap-2 mt-3 ">
+            <p className="text-xs text-slate-400 text-center">
+              If the requirements look clear to you, you can continue at any time.
+            </p>
+
+            <button
+              onClick={handleConfirm}
+              className="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm"
+            >
+              ✔ Confirm & Continue
+            </button>
+          </div>
+        )}
+
         {awaitingEmailConfirm && (
           <div className="shrink-0 border-t border-slate-800 px-4 py-3 flex gap-2 justify-center">
             <button
@@ -356,7 +397,13 @@ export default function App() {
           </div>
         )}
 
+
+
+
       </div>
+
+
+
     </div>
   );
 }
