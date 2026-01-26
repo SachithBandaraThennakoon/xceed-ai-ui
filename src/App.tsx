@@ -75,7 +75,10 @@ export default function App() {
 
     const userMsg = input;
     setInput("");
-
+    // ✅ RESET textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     // 1️⃣ Add user message
     setMessages(prev => [
       ...prev,
