@@ -250,8 +250,8 @@ export default function App() {
   // UI
   // -----------------------------
   return (
-    <div className="h-[100vh] bg-slate-900 text-slate-100 flex place-items-end py-5 justify-center">
-      <div className="w-full max-w-4xl h-[90vh] flex flex-col border border-slate-800 rounded-xl bg-slate-900 shadow-xl">
+     <div className="h-[100vh] bg-slate-900 text-slate-100 flex place-items-end py-2 justify-center">
+      <div className="w-full max-w-4xl h-[89vh] flex flex-col border border-slate-800 rounded-xl bg-slate-900 shadow-xl">
         {/* STATUS */}
         <div className="shrink-0 border-b border-slate-800 px-4 py-2 space-y-2">
           <StatusBar step={step} />
